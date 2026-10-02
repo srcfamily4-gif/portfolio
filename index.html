@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steven Curtis - Portfolio</title>
+  <title>Steven Curtis - Portfolio Tracker</title>
   <link rel="manifest" href="manifest.json">
   <style>
     body {
@@ -14,72 +14,182 @@
       background: #f4f7f6;
       color: #333;
     }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      margin-top: 20px;
-      text-align: center;
-    }
     h1 {
       margin-bottom: 5px;
       color: #111;
+      text-align: center;
     }
-    .metric {
-      font-size: 2.5rem;
-      font-weight: bold;
-      margin: 15px 0;
-      color: #0070f3;
+    .subtitle {
+      color: #666;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 25px;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      margin-bottom: 20px;
+    }
+    .total-section {
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+    }
+    .balance {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 10px 0;
+      color: #111;
+    }
+    .fluctuation {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .asset-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f9f9f9;
+    }
+    .asset-row:last-child {
+      border-bottom: none;
+    }
+    .asset-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .asset-ticker {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .asset-allocation {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .asset-values {
+      text-align: right;
+    }
+    .asset-price {
+      font-weight: 600;
+    }
+    .btn-container {
+      text-align: center;
+      margin-top: 25px;
     }
     .btn {
-      background: #111;
+      background: #0070f3;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 14px 28px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      width: 100%;
     }
     .btn:hover {
-      background: #333;
+      background: #0051cb;
     }
   </style>
 </head>
 <body>
 
   <h1>Steven Curtis</h1>
-  <p style="color: #666; margin-top: 0;">Interactive Portfolio App</p>
+  <p class="subtitle">Live Asset Portfolio Tracker</p>
 
   <div class="card">
-    <h3>Live Random Fluctuation</h3>
-    <div class="metric" id="display-value">0.00%</div>
-    <button class="btn" onclick="updateValue()">Generate Spread</button>
+    <div class="total-section">
+      <div class="label">Total Portfolio Balance</div>
+      <div class="balance" id="total-balance">$88,745.40</div>
+      <div class="fluctuation" id="total-fluctuation">0.00%</div>
+    </div>
+
+    <div class="label" style="margin-bottom: 10px;">Asset Allocation Breakdown</div>
+    
+    <div class="asset-row">
+      <div class="asset-info">
+        <span class="asset-ticker">SCHD</span>
+        <span class="asset-allocation">Schwab U.S. Dividend Equity (51%)</span>
+      </div>
+      <div class="asset-values">
+        <span class="asset-price" id="schd-val">$45,260.15</span>
+      </div>
+    </div>
+
+    <div class="asset-row">
+      <div class="asset-info">
+        <span class="asset-ticker">SPYI</span>
+        <span class="asset-allocation">NEOS S&P 500 High Income (28%)</span>
+      </div>
+      <div class="asset-values">
+        <span class="asset-price" id="spyi-val">$24,848.71</span>
+      </div>
+    </div>
+
+    <div class="asset-row">
+      <div class="asset-info">
+        <span class="asset-ticker">YTI</span>
+        <span class="asset-allocation">YieldMax Target Income (21%)</span>
+      </div>
+      <div class="asset-values">
+        <span class="asset-price" id="yti-val">$18,636.53</span>
+      </div>
+    </div>
+
+    <div class="btn-container">
+      <button class="btn" onclick="applyMarketFluctuation()">Simulate Tighter Market Spread</button>
+    </div>
   </div>
 
   <script>
-    // Tighter spread calculation engine (-1.8% to +2.1%)
-    function updateValue() {
-      const min = -1.8;
-      const max = 2.1;
-      const fluctuation = (Math.random() * (max - min) + min).toFixed(2);
-      
-      const display = document.getElementById('display-value');
-      display.textContent = (fluctuation >= 0 ? '+' : '') + fluctuation + '%';
-      
-      // Dynamic color change based on positive/negative metrics
-      if (fluctuation >= 0) {
-        display.style.color = '#00b074';
-      } else {
-        display.style.color = '#ff3b30';
-      }
+    // Exact starting balances based on original $88745.40 allocation percentages
+    const baseSCHD = 45260.154;
+    const baseSPYI = 24848.712;
+    const baseYTI = 18636.534;
+    const baseTotal = 88745.40;
+
+    function formatCurrency(num) {
+      return '$' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
 
-    // Run once on load
-    updateValue();
+    function applyMarketFluctuation() {
+      // Tighter random spread constraint: -1.8% to +2.1%
+      const min = -1.8;
+      const max = 2.1;
+      const changePercent = (Math.random() * (max - min) + min);
+      const multiplier = 1 + (changePercent / 100);
+
+      // Apply fluctuation to individual holdings
+      const newSCHD = baseSCHD * multiplier;
+      const newSPYI = baseSPYI * multiplier;
+      const newYTI = baseYTI * multiplier;
+      const newTotal = newSCHD + newSPYI + newYTI;
+
+      // Update values in HTML view context
+      document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
+      document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
+      document.getElementById('yti-val').textContent = formatCurrency(newYTI);
+      document.getElementById('total-balance').textContent = formatCurrency(newTotal);
+
+      // Render performance percentage metrics
+      const flucDisplay = document.getElementById('total-fluctuation');
+      flucDisplay.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
+      flucDisplay.style.color = changePercent >= 0 ? '#00b074' : '#ff3b30';
+    }
   </script>
 
-  <!-- Service Worker Registration at the absolute bottom -->
+  <!-- Clean Service Worker hook for offline WebAPK execution framework -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
