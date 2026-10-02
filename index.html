@@ -82,24 +82,34 @@
     .asset-price {
       font-weight: 600;
     }
-    .btn-container {
-      text-align: center;
+    .btn-group {
+      display: flex;
+      gap: 15px;
       margin-top: 25px;
     }
     .btn {
-      background: #0070f3;
+      flex: 1;
       color: white;
       border: none;
-      padding: 14px 28px;
+      padding: 14px 0;
       border-radius: 8px;
       cursor: pointer;
       font-size: 1rem;
       font-weight: 600;
       transition: background 0.2s;
-      width: 100%;
+      text-align: center;
     }
-    .btn:hover {
-      background: #0051cb;
+    .btn-buy {
+      background: #00b074;
+    }
+    .btn-buy:hover {
+      background: #008f5d;
+    }
+    .btn-sell {
+      background: #ff3b30;
+    }
+    .btn-sell:hover {
+      background: #d62f27;
     }
   </style>
 </head>
@@ -147,42 +157,47 @@
       </div>
     </div>
 
-    <div class="btn-container">
-      <button class="btn" onclick="applyMarketFluctuation()">Simulate Tighter Market Spread</button>
+    <!-- Replaced single button layout with Buy/Sell option rows -->
+    <div class="btn-group">
+      <button class="btn btn-buy" onclick="handleTransaction(500)">Buy $500</button>
+      <button class="btn btn-sell" onclick="handleTransaction(-500)">Sell $500</button>
     </div>
   </div>
 
   <script>
-    // Exact starting balances based on original $88745.40 allocation percentages
-    const baseSCHD = 45260.154;
-    const baseSPYI = 24848.712;
-    const baseYTI = 18636.534;
-    const baseTotal = 88745.40;
+    // Set dynamic tracking state using your exact base balances
+    let currentTotal = 88745.40;
 
     function formatCurrency(num) {
       return '$' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
 
-    function applyMarketFluctuation() {
-      // Tighter random spread constraint: -1.8% to +2.1%
+    function handleTransaction(amount) {
+      // Modify tracking asset base directly
+      currentTotal += amount;
+      if (currentTotal < 0) currentTotal = 0;
+
+      // Generate random tight spread fluctuation constraint: -1.8% to +2.1%
       const min = -1.8;
       const max = 2.1;
       const changePercent = (Math.random() * (max - min) + min);
-      const multiplier = 1 + (changePercent / 100);
+      const fluctuationMultiplier = 1 + (changePercent / 100);
 
-      // Apply fluctuation to individual holdings
-      const newSCHD = baseSCHD * multiplier;
-      const newSPYI = baseSPYI * multiplier;
-      const newYTI = baseYTI * multiplier;
-      const newTotal = newSCHD + newSPYI + newYTI;
+      // Apply tighter random spread multiplier directly onto the adjusted balance
+      const postMarketTotal = currentTotal * fluctuationMultiplier;
 
-      // Update values in HTML view context
+      // Dynamically calculate asset values using precise allocation tiers
+      const newSCHD = postMarketTotal * 0.51;
+      const newSPYI = postMarketTotal * 0.28;
+      const newYTI = postMarketTotal * 0.21;
+
+      // Update structural view tags
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
       document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
-      document.getElementById('total-balance').textContent = formatCurrency(newTotal);
+      document.getElementById('total-balance').textContent = formatCurrency(postMarketTotal);
 
-      // Render performance percentage metrics
+      // Render updated performance percentage indicators
       const flucDisplay = document.getElementById('total-fluctuation');
       flucDisplay.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
       flucDisplay.style.color = changePercent >= 0 ? '#00b074' : '#ff3b30';
