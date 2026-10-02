@@ -5,28 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Steven Curtis - Portfolio</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f4f7f6;
+      color: #333;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-top: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 5px;
+      color: #111;
+    }
+    .metric {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 15px 0;
+      color: #0070f3;
+    }
+    .btn {
+      background: #111;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn:hover {
+      background: #333;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- 1. The New Heading at the Top -->
   <h1>Steven Curtis</h1>
+  <p style="color: #666; margin-top: 0;">Interactive Portfolio App</p>
 
-  <!-- Your existing portfolio content goes here -->
+  <div class="card">
+    <h3>Live Random Fluctuation</h3>
+    <div class="metric" id="display-value">0.00%</div>
+    <button class="btn" onclick="updateValue()">Generate Spread</button>
+  </div>
 
-  <!-- 2. The Updated Random Fluctuation Script -->
   <script>
-    // Tighter spread function: Generates a number between -1.8 and +2.1
-    function getFluctuation() {
+    // Tighter spread calculation engine (-1.8% to +2.1%)
+    function updateValue() {
       const min = -1.8;
       const max = 2.1;
-      return (Math.random() * (max - min) + min).toFixed(2);
+      const fluctuation = (Math.random() * (max - min) + min).toFixed(2);
+      
+      const display = document.getElementById('display-value');
+      display.textContent = (fluctuation >= 0 ? '+' : '') + fluctuation + '%';
+      
+      // Dynamic color change based on positive/negative metrics
+      if (fluctuation >= 0) {
+        display.style.color = '#00b074';
+      } else {
+        display.style.color = '#ff3b30';
+      }
     }
-    
-    // Example usage: You can apply this getFluctuation() value to your app's data logic
-    console.log("Current Fluctuation:", getFluctuation() + "%");
+
+    // Run once on load
+    updateValue();
   </script>
 
-  <!-- 3. The Service Worker Registration (Kept clean at the very bottom) -->
+  <!-- Service Worker Registration at the absolute bottom -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
