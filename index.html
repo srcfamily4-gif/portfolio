@@ -165,5 +165,10 @@
             }
         });
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/portfolio/sw.js');
+  }
+</script>
 </body>
 </html>
