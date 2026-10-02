@@ -185,9 +185,11 @@
       return '$' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
 
-    function getDailyFluctuation() {
+    // Seeded pseudo-random number generator for individual calculations based on unique keys
+    function getIndependentFluctuation(tickerKey) {
       const today = new Date();
-      const dateString = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+      // Add the specific stock ticker string to the date seed to separate the numbers
+      const dateString = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate() + '-' + tickerKey;
       
       let hash = 0;
       for (let i = 0; i < dateString.length; i++) {
@@ -201,47 +203,46 @@
     }
 
     function renderPortfolio() {
-      const changePercent = getDailyFluctuation();
-      const fluctuationMultiplier = 1 + (changePercent / 100);
+      // 1. Get unique, distinct random shifts for each asset
+      const schdChange = getIndependentFluctuation('SCHD');
+      const spyiChange = getIndependentFluctuation('SPYI');
+      const ytiChange = getIndependentFluctuation('YTI');
 
+      // 2. Map target allocations to the current deposited cash base
       const baseSCHD = cashBase * 0.51;
       const baseSPYI = cashBase * 0.28;
       const baseYTI = cashBase * 0.21;
 
-      const newSCHD = baseSCHD * fluctuationMultiplier;
-      const newSPYI = baseSPYI * fluctuationMultiplier;
-      const newYTI = baseYTI * fluctuationMultiplier;
+      // 3. Apply individual unique multipliers directly
+      const newSCHD = baseSCHD * (1 + (schdChange / 100));
+      const newSPYI = baseSPYI * (1 + (spyiChange / 100));
+      const newYTI = baseYTI * (1 + (ytiChange / 100));
 
-      const calculatedTotal = newSCHD + newSPYI + newYTI;
+      // 4. Calculate exact final total sum and look at the real mathematical difference
+      const totalPostMarket = newSCHD + newSPYI + newYTI;
+      const overallChangePercent = ((totalPostMarket - cashBase) / cashBase) * 100;
 
-      // Update structural values
+      // Update structural values on screen
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
       document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
-      document.getElementById('total-balance').textContent = formatCurrency(calculatedTotal);
+      document.getElementById('total-balance').textContent = formatCurrency(totalPostMarket);
 
-      // Render performance tracking percentage string
-      const flucString = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
-      const colorStyle = changePercent >= 0 ? '#00b074' : '#ff3b30';
-
-      // Update total tracker section display
+      // Render total overall portfolio tracking change
       const totalDisplay = document.getElementById('total-fluctuation');
-      totalDisplay.textContent = flucString;
-      totalDisplay.style.color = colorStyle;
+      totalDisplay.textContent = (overallChangePercent >= 0 ? '+' : '') + overallChangePercent.toFixed(2) + '%';
+      totalDisplay.style.color = overallChangePercent >= 0 ? '#00b074' : '#ff3b30';
 
-      // Mirror performance strings underneath individual stock layout blocks
-      const schdDisplay = document.getElementById('schd-fluc');
-      const spyiDisplay = document.getElementById('spyi-fluc');
-      const ytiDisplay = document.getElementById('yti-fluc');
+      // Render individual decoupled shift outputs
+      updateAssetDisplay('schd-fluc', schdChange);
+      updateAssetDisplay('spyi-fluc', spyiChange);
+      updateAssetDisplay('yti-fluc', ytiChange);
+    }
 
-      schdDisplay.textContent = flucString;
-      schdDisplay.style.color = colorStyle;
-
-      spyiDisplay.textContent = flucString;
-      spyiDisplay.style.color = colorStyle;
-
-      ytiDisplay.textContent = flucString;
-      ytiDisplay.style.color = colorStyle;
+    function updateAssetDisplay(elementId, changeValue) {
+      const display = document.getElementById(elementId);
+      display.textContent = (changeValue >= 0 ? '+' : '') + changeValue.toFixed(2) + '%';
+      display.style.color = changeValue >= 0 ? '#00b074' : '#ff3b30';
     }
 
     function handleTransaction(amount) {
