@@ -76,6 +76,11 @@
       font-size: 0.85rem;
       color: #666;
     }
+    .asset-change {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
     .asset-values {
       text-align: right;
     }
@@ -127,30 +132,36 @@
 
     <div class="label" style="margin-bottom: 10px;">Asset Allocation Breakdown</div>
     
+    <!-- SCHD Row -->
     <div class="asset-row">
       <div class="asset-info">
         <span class="asset-ticker">SCHD</span>
         <span class="asset-allocation">Schwab U.S. Dividend Equity (51%)</span>
+        <span class="asset-change" id="schd-fluc">0.00%</span>
       </div>
       <div class="asset-values">
         <span class="asset-price" id="schd-val">$45,260.15</span>
       </div>
     </div>
 
+    <!-- SPYI Row -->
     <div class="asset-row">
       <div class="asset-info">
         <span class="asset-ticker">SPYI</span>
         <span class="asset-allocation">NEOS S&P 500 High Income (28%)</span>
+        <span class="asset-change" id="spyi-fluc">0.00%</span>
       </div>
       <div class="asset-values">
         <span class="asset-price" id="spyi-val">$24,848.71</span>
       </div>
     </div>
 
+    <!-- YTI Row -->
     <div class="asset-row">
       <div class="asset-info">
         <span class="asset-ticker">YTI</span>
         <span class="asset-allocation">YieldMax Target Income (21%)</span>
+        <span class="asset-change" id="yti-fluc">0.00%</span>
       </div>
       <div class="asset-values">
         <span class="asset-price" id="yti-val">$18,636.53</span>
@@ -164,7 +175,6 @@
   </div>
 
   <script>
-    // Load existing tracking base or initialize to exact starting value
     let cashBase = parseFloat(localStorage.getItem('portfolio_cash_base'));
     if (isNaN(cashBase)) {
       cashBase = 88745.40;
@@ -175,7 +185,6 @@
       return '$' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
 
-    // Seeded random number generator so the daily shift stays fixed all day long
     function getDailyFluctuation() {
       const today = new Date();
       const dateString = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
@@ -195,29 +204,44 @@
       const changePercent = getDailyFluctuation();
       const fluctuationMultiplier = 1 + (changePercent / 100);
 
-      // 1. Calculate static base values for individual holdings before market fluctuation
       const baseSCHD = cashBase * 0.51;
       const baseSPYI = cashBase * 0.28;
       const baseYTI = cashBase * 0.21;
 
-      // 2. Apply the exact market fluctuation multiplier to the individual stock values
       const newSCHD = baseSCHD * fluctuationMultiplier;
       const newSPYI = baseSPYI * fluctuationMultiplier;
       const newYTI = baseYTI * fluctuationMultiplier;
 
-      // 3. The overall total balance is the precise sum of the fluctuated stocks
       const calculatedTotal = newSCHD + newSPYI + newYTI;
 
-      // Update structural HTML elements
+      // Update structural values
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
       document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
       document.getElementById('total-balance').textContent = formatCurrency(calculatedTotal);
 
-      // Render performance tracking elements
-      const flucDisplay = document.getElementById('total-fluctuation');
-      flucDisplay.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
-      flucDisplay.style.color = changePercent >= 0 ? '#00b074' : '#ff3b30';
+      // Render performance tracking percentage string
+      const flucString = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
+      const colorStyle = changePercent >= 0 ? '#00b074' : '#ff3b30';
+
+      // Update total tracker section display
+      const totalDisplay = document.getElementById('total-fluctuation');
+      totalDisplay.textContent = flucString;
+      totalDisplay.style.color = colorStyle;
+
+      // Mirror performance strings underneath individual stock layout blocks
+      const schdDisplay = document.getElementById('schd-fluc');
+      const spyiDisplay = document.getElementById('spyi-fluc');
+      const ytiDisplay = document.getElementById('yti-fluc');
+
+      schdDisplay.textContent = flucString;
+      schdDisplay.style.color = colorStyle;
+
+      spyiDisplay.textContent = flucString;
+      spyiDisplay.style.color = colorStyle;
+
+      ytiDisplay.textContent = flucString;
+      ytiDisplay.style.color = colorStyle;
     }
 
     function handleTransaction(amount) {
@@ -228,7 +252,6 @@
       renderPortfolio();
     }
 
-    // Initialize layout on app execution
     renderPortfolio();
   </script>
 
