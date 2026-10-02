@@ -180,13 +180,11 @@
       const today = new Date();
       const dateString = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
       
-      // Convert date string to a numeric hash seed
       let hash = 0;
       for (let i = 0; i < dateString.length; i++) {
         hash = dateString.charCodeAt(i) + ((hash << 5) - hash);
       }
       
-      // Generate deterministic value between -1.8% and +2.1%
       const min = -1.8;
       const max = 2.1;
       const pseudoRandom = Math.abs(Math.sin(hash)) * 1000 % 1; 
@@ -197,15 +195,20 @@
       const changePercent = getDailyFluctuation();
       const fluctuationMultiplier = 1 + (changePercent / 100);
 
-      // Apply the daily market shift to the current cash base balances
-      const calculatedTotal = cashBase * fluctuationMultiplier;
+      // 1. Calculate static base values for individual holdings before market fluctuation
+      const baseSCHD = cashBase * 0.51;
+      const baseSPYI = cashBase * 0.28;
+      const baseYTI = cashBase * 0.21;
 
-      // Maintain precise static structural asset splits
-      const newSCHD = calculatedTotal * 0.51;
-      const newSPYI = calculatedTotal * 0.28;
-      const newYTI = calculatedTotal * 0.21;
+      // 2. Apply the exact market fluctuation multiplier to the individual stock values
+      const newSCHD = baseSCHD * fluctuationMultiplier;
+      const newSPYI = baseSPYI * fluctuationMultiplier;
+      const newYTI = baseYTI * fluctuationMultiplier;
 
-      // Update structural HTML tags
+      // 3. The overall total balance is the precise sum of the fluctuated stocks
+      const calculatedTotal = newSCHD + newSPYI + newYTI;
+
+      // Update structural HTML elements
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
       document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
@@ -221,7 +224,6 @@
       cashBase += amount;
       if (cashBase < 0) cashBase = 0;
       
-      // Permanently save user balance state to device storage
       localStorage.setItem('portfolio_cash_base', cashBase);
       renderPortfolio();
     }
