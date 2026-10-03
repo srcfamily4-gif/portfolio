@@ -101,7 +101,7 @@
       cursor: pointer;
       font-size: 1rem;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       text-align: center;
     }
     .btn-buy {
@@ -116,26 +116,34 @@
     .btn-sell:hover {
       background: #d62f27;
     }
-    .btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+    
+    /* Fixed highlight border logic for mobile layouts */
+    .btn.selected-buy {
+      outline: 4px solid #111;
+      transform: scale(0.97);
     }
-    .btn.active-action {
-      ring: 3px solid #111;
-      transform: scale(0.98);
-      box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+    .btn.selected-sell {
+      outline: 4px solid #111;
+      transform: scale(0.97);
     }
-    #confirm-box {
-      margin-top: 15px;
+    
+    #confirm-panel {
+      margin-top: 20px;
       display: none;
-      text-align: center;
     }
     .btn-confirm {
       background: #0070f3;
-      width: 100%;
+      flex: 2;
     }
     .btn-confirm:hover {
       background: #0051cb;
+    }
+    .btn-cancel {
+      background: #767676;
+      flex: 1;
+    }
+    .btn-cancel:hover {
+      background: #545454;
     }
   </style>
 </head>
@@ -147,8 +155,8 @@
   <div class="card">
     <div class="total-section">
       <div class="label">Total Portfolio Balance</div>
-      <div class="balance" id="total-balance">\$88,745.40</div>
-      <div class="fluctuation" id="total-fluctuation">+\$0.00 (0.00%)</div>
+      <div class="balance" id="total-balance">$88,745.40</div>
+      <div class="fluctuation" id="total-fluctuation">+$0.00 (0.00%)</div>
     </div>
 
     <div class="label" style="margin-bottom: 10px;">Asset Allocation Breakdown</div>
@@ -158,10 +166,10 @@
       <div class="asset-info">
         <span class="asset-ticker">SCHD</span>
         <span class="asset-allocation">Schwab U.S. Dividend Equity (51%)</span>
-        <span class="asset-change" id="schd-fluc">+\$0.00 (0.00%)</span>
+        <span class="asset-change" id="schd-fluc">+$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="schd-val">\$45,260.15</span>
+        <span class="asset-price" id="schd-val">$45,260.15</span>
       </div>
     </div>
 
@@ -170,10 +178,10 @@
       <div class="asset-info">
         <span class="asset-ticker">SPYI</span>
         <span class="asset-allocation">NEOS S&P 500 High Income (28%)</span>
-        <span class="asset-change" id="spyi-fluc">+\$0.00 (0.00%)</span>
+        <span class="asset-change" id="spyi-fluc">+$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="spyi-val">\$24,848.71</span>
+        <span class="asset-price" id="spyi-val">$24,848.71</span>
       </div>
     </div>
 
@@ -182,22 +190,23 @@
       <div class="asset-info">
         <span class="asset-ticker">YTI</span>
         <span class="asset-allocation">YieldMax Target Income (21%)</span>
-        <span class="asset-change" id="yti-fluc">+\$0.00 (0.00%)</span>
+        <span class="asset-change" id="yti-fluc">+$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="yti-val">\$18,636.53</span>
+        <span class="asset-price" id="yti-val">$18,636.53</span>
       </div>
     </div>
 
-    <!-- Primary Action Layer -->
+    <!-- Primary Action Rows -->
     <div class="btn-group">
-      <button id="buy-btn" class="btn btn-buy" onclick="stageTransaction(500)">Buy \$500</button>
-      <button id="sell-btn" class="btn btn-sell" onclick="stageTransaction(-500)">Sell \$500</button>
+      <button id="buy-btn" class="btn btn-buy" onclick="stageTransaction(500)">Buy $500</button>
+      <button id="sell-btn" class="btn btn-sell" onclick="stageTransaction(-500)">Sell $500</button>
     </div>
 
-    <!-- Secondary Confirmation Layer -->
-    <div id="confirm-box">
-      <button class="btn btn-confirm" onclick="executeTransaction()">Confirm Transaction</button>
+    <!-- Dual Confirmation Layer Panel Container -->
+    <div id="confirm-panel" class="btn-group">
+      <button id="confirm-text-btn" class="btn btn-confirm" onclick="executeTransaction()">Confirm Buy $500</button>
+      <button class="btn btn-cancel" onclick="clearStagedTransaction()">Cancel</button>
     </div>
   </div>
 
@@ -208,11 +217,10 @@
       localStorage.setItem('portfolio_cash_base', cashBase);
     }
 
-    // Temporary storage holding the transaction until confirmation step passes
     let pendingAmount = 0;
 
     function formatCurrency(num) {
-      return '\$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return '$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
     function formatChange(dollarDiff, percentChange) {
@@ -274,43 +282,43 @@
       display.style.color = dollarDiff >= 0 ? '#00b074' : '#ff3b30';
     }
 
-    // Step 1: Stage the value choice and unlock the confirm panel container button
+    // Step 1: Stage action parameters and swap visibility tags
     function stageTransaction(amount) {
       pendingAmount = amount;
       
       const buyBtn = document.getElementById('buy-btn');
       const sellBtn = document.getElementById('sell-btn');
-      const confirmBox = document.getElementById('confirm-box');
+      const confirmPanel = document.getElementById('confirm-panel');
+      const confirmTextBtn = document.getElementById('confirm-text-btn');
 
-      // Visual selector highlights matching the click action paths
       if (amount > 0) {
-        buyBtn.classList.add('active-action');
-        sellBtn.classList.remove('active-action');
+        buyBtn.classList.add('selected-buy');
+        sellBtn.classList.remove('selected-sell');
+        confirmTextBtn.textContent = 'Confirm Buy $500';
       } else {
-        sellBtn.classList.add('active-action');
-        buyBtn.classList.remove('active-action');
+        sellBtn.classList.add('selected-sell');
+        buyBtn.classList.remove('selected-buy');
+        confirmTextBtn.textContent = 'Confirm Sell $500';
       }
 
-      // Display the hidden transaction execution panel row
-      confirmBox.style.display = 'block';
+      confirmPanel.style.display = 'flex';
     }
 
-    // Step 2: Finalize math calculation state changes on direct confirmation click
+    // Step 2: Execute numerical adjustments on direct action verify click
     function executeTransaction() {
       cashBase += pendingAmount;
       if (cashBase < 0) cashBase = 0;
       
       localStorage.setItem('portfolio_cash_base', cashBase);
-      
-      // Clean up layout buttons and hide confirmation drawer
-      document.getElementById('buy-btn').classList.remove('active-action');
-      document.getElementById('sell-btn').classList.remove('active-action');
-      document.getElementById('confirm-box').style.display = 'none';
-      
-      // Clear pending register tokens
-      pendingAmount = 0;
+      clearStagedTransaction();
+    }
 
-      // Update calculations view maps
+    // Step 3: Dismiss secondary layer rows and drop tracking flags cleanly
+    function clearStagedTransaction() {
+      pendingAmount = 0;
+      document.getElementById('buy-btn').classList.remove('selected-buy');
+      document.getElementById('sell-btn').classList.remove('selected-sell');
+      document.getElementById('confirm-panel').style.display = 'none';
       renderPortfolio();
     }
 
@@ -323,6 +331,3 @@
         navigator.serviceWorker.register('./sw.js');
       });
     }
-  </script>
-</body>
-</html>
