@@ -168,6 +168,7 @@
       </div>
     </div>
 
+    <!-- Slashes completely removed from button text -->
     <div class="btn-group">
       <button class="btn btn-buy" onclick="handleTransaction(500)">Buy \$500</button>
       <button class="btn btn-sell" onclick="handleTransaction(-500)">Sell \$500</button>
@@ -181,7 +182,6 @@
       localStorage.setItem('portfolio_cash_base', cashBase);
     }
 
-    // Cleaned up currency calculation layout mechanism
     function formatCurrency(num) {
       return '\$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
@@ -225,18 +225,15 @@
       const totalDollarDiff = totalPostMarket - cashBase;
       const overallChangePercent = (totalDollarDiff / cashBase) * 100;
 
-      // Update structural values on screen
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
       document.getElementById('spyi-val').textContent = formatCurrency(newSPYI);
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
       document.getElementById('total-balance').textContent = formatCurrency(totalPostMarket);
 
-      // Render total overall portfolio tracking metrics
       const totalDisplay = document.getElementById('total-fluctuation');
       totalDisplay.textContent = formatChange(totalDollarDiff, overallChangePercent);
       totalDisplay.style.color = totalDollarDiff >= 0 ? '#00b074' : '#ff3b30';
 
-      // Render individual decoupled shifts with fixed metrics
       updateAssetDisplay('schd-fluc', newSCHD - baseSCHD, schdChange);
       updateAssetDisplay('spyi-fluc', newSPYI - baseSPYI, spyiChange);
       updateAssetDisplay('yti-fluc', newYTI - baseYTI, ytiChange);
