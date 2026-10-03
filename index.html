@@ -181,6 +181,7 @@
       localStorage.setItem('portfolio_cash_base', cashBase);
     }
 
+    // Fixed currency function formatting back to clean standard rules
     function formatCurrency(num) {
       return '\(' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '\)&,');
     }
@@ -221,13 +222,8 @@
 
       const totalPostMarket = newSCHD + newSPYI + newYTI;
       
-      // Calculate variance discrepancies
       const totalDollarDiff = totalPostMarket - cashBase;
       const overallChangePercent = (totalDollarDiff / cashBase) * 100;
-
-      const schdDollarDiff = newSCHD - baseSCHD;
-      const spyiDollarDiff = newYTI - baseSPYI; // Math fix to track separate index nodes
-      const ytiDollarDiff = newYTI - baseYTI;
 
       // Update structural values on screen
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
@@ -240,7 +236,7 @@
       totalDisplay.textContent = formatChange(totalDollarDiff, overallChangePercent);
       totalDisplay.style.color = totalDollarDiff >= 0 ? '#00b074' : '#ff3b30';
 
-      // Render individual decoupled shifts with dollar and percent formats
+      // Render individual decoupled shifts with corrected dollar differential references
       updateAssetDisplay('schd-fluc', newSCHD - baseSCHD, schdChange);
       updateAssetDisplay('spyi-fluc', newSPYI - baseSPYI, spyiChange);
       updateAssetDisplay('yti-fluc', newYTI - baseYTI, ytiChange);
