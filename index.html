@@ -101,7 +101,7 @@
       cursor: pointer;
       font-size: 1rem;
       font-weight: 600;
-      transition: background 0.2s;
+      transition: all 0.2s;
       text-align: center;
     }
     .btn-buy {
@@ -115,6 +115,27 @@
     }
     .btn-sell:hover {
       background: #d62f27;
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn.active-action {
+      ring: 3px solid #111;
+      transform: scale(0.98);
+      box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+    }
+    #confirm-box {
+      margin-top: 15px;
+      display: none;
+      text-align: center;
+    }
+    .btn-confirm {
+      background: #0070f3;
+      width: 100%;
+    }
+    .btn-confirm:hover {
+      background: #0051cb;
     }
   </style>
 </head>
@@ -168,10 +189,15 @@
       </div>
     </div>
 
-    <!-- Slashes completely removed from button text -->
+    <!-- Primary Action Layer -->
     <div class="btn-group">
-      <button class="btn btn-buy" onclick="handleTransaction(500)">Buy \$500</button>
-      <button class="btn btn-sell" onclick="handleTransaction(-500)">Sell \$500</button>
+      <button id="buy-btn" class="btn btn-buy" onclick="stageTransaction(500)">Buy \$500</button>
+      <button id="sell-btn" class="btn btn-sell" onclick="stageTransaction(-500)">Sell \$500</button>
+    </div>
+
+    <!-- Secondary Confirmation Layer -->
+    <div id="confirm-box">
+      <button class="btn btn-confirm" onclick="executeTransaction()">Confirm Transaction</button>
     </div>
   </div>
 
@@ -181,6 +207,9 @@
       cashBase = 88745.40;
       localStorage.setItem('portfolio_cash_base', cashBase);
     }
+
+    // Temporary storage holding the transaction until confirmation step passes
+    let pendingAmount = 0;
 
     function formatCurrency(num) {
       return '\$' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -245,11 +274,43 @@
       display.style.color = dollarDiff >= 0 ? '#00b074' : '#ff3b30';
     }
 
-    function handleTransaction(amount) {
-      cashBase += amount;
+    // Step 1: Stage the value choice and unlock the confirm panel container button
+    function stageTransaction(amount) {
+      pendingAmount = amount;
+      
+      const buyBtn = document.getElementById('buy-btn');
+      const sellBtn = document.getElementById('sell-btn');
+      const confirmBox = document.getElementById('confirm-box');
+
+      // Visual selector highlights matching the click action paths
+      if (amount > 0) {
+        buyBtn.classList.add('active-action');
+        sellBtn.classList.remove('active-action');
+      } else {
+        sellBtn.classList.add('active-action');
+        buyBtn.classList.remove('active-action');
+      }
+
+      // Display the hidden transaction execution panel row
+      confirmBox.style.display = 'block';
+    }
+
+    // Step 2: Finalize math calculation state changes on direct confirmation click
+    function executeTransaction() {
+      cashBase += pendingAmount;
       if (cashBase < 0) cashBase = 0;
       
       localStorage.setItem('portfolio_cash_base', cashBase);
+      
+      // Clean up layout buttons and hide confirmation drawer
+      document.getElementById('buy-btn').classList.remove('active-action');
+      document.getElementById('sell-btn').classList.remove('active-action');
+      document.getElementById('confirm-box').style.display = 'none';
+      
+      // Clear pending register tokens
+      pendingAmount = 0;
+
+      // Update calculations view maps
       renderPortfolio();
     }
 
