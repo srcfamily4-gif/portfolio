@@ -126,8 +126,8 @@
   <div class="card">
     <div class="total-section">
       <div class="label">Total Portfolio Balance</div>
-      <div class="balance" id="total-balance">$88,745.40</div>
-      <div class="fluctuation" id="total-fluctuation">0.00%</div>
+      <div class="balance" id="total-balance">\$88,745.40</div>
+      <div class="fluctuation" id="total-fluctuation">+\$0.00 (0.00%)</div>
     </div>
 
     <div class="label" style="margin-bottom: 10px;">Asset Allocation Breakdown</div>
@@ -137,10 +137,10 @@
       <div class="asset-info">
         <span class="asset-ticker">SCHD</span>
         <span class="asset-allocation">Schwab U.S. Dividend Equity (51%)</span>
-        <span class="asset-change" id="schd-fluc">0.00%</span>
+        <span class="asset-change" id="schd-fluc">+\$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="schd-val">$45,260.15</span>
+        <span class="asset-price" id="schd-val">\$45,260.15</span>
       </div>
     </div>
 
@@ -149,10 +149,10 @@
       <div class="asset-info">
         <span class="asset-ticker">SPYI</span>
         <span class="asset-allocation">NEOS S&P 500 High Income (28%)</span>
-        <span class="asset-change" id="spyi-fluc">0.00%</span>
+        <span class="asset-change" id="spyi-fluc">+\$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="spyi-val">$24,848.71</span>
+        <span class="asset-price" id="spyi-val">\$24,848.71</span>
       </div>
     </div>
 
@@ -161,16 +161,16 @@
       <div class="asset-info">
         <span class="asset-ticker">YTI</span>
         <span class="asset-allocation">YieldMax Target Income (21%)</span>
-        <span class="asset-change" id="yti-fluc">0.00%</span>
+        <span class="asset-change" id="yti-fluc">+\$0.00 (0.00%)</span>
       </div>
       <div class="asset-values">
-        <span class="asset-price" id="yti-val">$18,636.53</span>
+        <span class="asset-price" id="yti-val">\$18,636.53</span>
       </div>
     </div>
 
     <div class="btn-group">
-      <button class="btn btn-buy" onclick="handleTransaction(500)">Buy $500</button>
-      <button class="btn btn-sell" onclick="handleTransaction(-500)">Sell $500</button>
+      <button class="btn btn-buy" onclick="handleTransaction(500)">Buy \$500</button>
+      <button class="btn btn-sell" onclick="handleTransaction(-500)">Sell \$500</button>
     </div>
   </div>
 
@@ -182,13 +182,17 @@
     }
 
     function formatCurrency(num) {
-      return '$' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+      return '\(' + num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '\)&,');
     }
 
-    // Seeded pseudo-random number generator for individual calculations based on unique keys
+    function formatChange(dollarDiff, percentChange) {
+      const sign = dollarDiff >= 0 ? '+' : '-';
+      const cleanDollar = Math.abs(dollarDiff).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '\$&,');
+      return `${sign}$${cleanDollar} (${dollarDiff >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`;
+    }
+
     function getIndependentFluctuation(tickerKey) {
       const today = new Date();
-      // Add the specific stock ticker string to the date seed to separate the numbers
       const dateString = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate() + '-' + tickerKey;
       
       let hash = 0;
@@ -203,24 +207,27 @@
     }
 
     function renderPortfolio() {
-      // 1. Get unique, distinct random shifts for each asset
       const schdChange = getIndependentFluctuation('SCHD');
       const spyiChange = getIndependentFluctuation('SPYI');
       const ytiChange = getIndependentFluctuation('YTI');
 
-      // 2. Map target allocations to the current deposited cash base
       const baseSCHD = cashBase * 0.51;
       const baseSPYI = cashBase * 0.28;
       const baseYTI = cashBase * 0.21;
 
-      // 3. Apply individual unique multipliers directly
       const newSCHD = baseSCHD * (1 + (schdChange / 100));
       const newSPYI = baseSPYI * (1 + (spyiChange / 100));
       const newYTI = baseYTI * (1 + (ytiChange / 100));
 
-      // 4. Calculate exact final total sum and look at the real mathematical difference
       const totalPostMarket = newSCHD + newSPYI + newYTI;
-      const overallChangePercent = ((totalPostMarket - cashBase) / cashBase) * 100;
+      
+      // Calculate variance discrepancies
+      const totalDollarDiff = totalPostMarket - cashBase;
+      const overallChangePercent = (totalDollarDiff / cashBase) * 100;
+
+      const schdDollarDiff = newSCHD - baseSCHD;
+      const spyiDollarDiff = newYTI - baseSPYI; // Math fix to track separate index nodes
+      const ytiDollarDiff = newYTI - baseYTI;
 
       // Update structural values on screen
       document.getElementById('schd-val').textContent = formatCurrency(newSCHD);
@@ -228,21 +235,21 @@
       document.getElementById('yti-val').textContent = formatCurrency(newYTI);
       document.getElementById('total-balance').textContent = formatCurrency(totalPostMarket);
 
-      // Render total overall portfolio tracking change
+      // Render total overall portfolio tracking metrics
       const totalDisplay = document.getElementById('total-fluctuation');
-      totalDisplay.textContent = (overallChangePercent >= 0 ? '+' : '') + overallChangePercent.toFixed(2) + '%';
-      totalDisplay.style.color = overallChangePercent >= 0 ? '#00b074' : '#ff3b30';
+      totalDisplay.textContent = formatChange(totalDollarDiff, overallChangePercent);
+      totalDisplay.style.color = totalDollarDiff >= 0 ? '#00b074' : '#ff3b30';
 
-      // Render individual decoupled shift outputs
-      updateAssetDisplay('schd-fluc', schdChange);
-      updateAssetDisplay('spyi-fluc', spyiChange);
-      updateAssetDisplay('yti-fluc', ytiChange);
+      // Render individual decoupled shifts with dollar and percent formats
+      updateAssetDisplay('schd-fluc', newSCHD - baseSCHD, schdChange);
+      updateAssetDisplay('spyi-fluc', newSPYI - baseSPYI, spyiChange);
+      updateAssetDisplay('yti-fluc', newYTI - baseYTI, ytiChange);
     }
 
-    function updateAssetDisplay(elementId, changeValue) {
+    function updateAssetDisplay(elementId, dollarDiff, changeValue) {
       const display = document.getElementById(elementId);
-      display.textContent = (changeValue >= 0 ? '+' : '') + changeValue.toFixed(2) + '%';
-      display.style.color = changeValue >= 0 ? '#00b074' : '#ff3b30';
+      display.textContent = formatChange(dollarDiff, changeValue);
+      display.style.color = dollarDiff >= 0 ? '#00b074' : '#ff3b30';
     }
 
     function handleTransaction(amount) {
